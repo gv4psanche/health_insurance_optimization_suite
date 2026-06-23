@@ -10,7 +10,7 @@ Built a multi-task analytics pipeline using **Python** and **XGBoost** to simult
 
 To ensure transparency for non-technical stakeholders (e.g., risk officers and medical directors), I extracted feature importance metrics using the XGBoost F-Score (weight-based split frequency).
 
-![XGBoost Feature Importance](xgboost_feature_importance.png)
+![XGBoost Feature Importance](images/xgboost_feature_importance.png)
 
 #### **Key Business Insights Derived:**
 1. **Fraud Mitigation:** Claim amount history and distance from home emerged as the primary signals, allowing the risk team to automatically flag anomalous high-dollar out-of-network claims.
