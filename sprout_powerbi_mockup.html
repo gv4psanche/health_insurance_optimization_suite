@@ -1,0 +1,1348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cedar — Power BI Dashboard Suite</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+
+  :root {
+    --bg: #0f1117;
+    --surface: #171b25;
+    --surface2: #1e2433;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.12);
+    --text: #e8eaf0;
+    --muted: #7a8299;
+    --hint: #4a5068;
+    --teal: #1fc99a;
+    --teal-dim: rgba(31,201,154,0.12);
+    --blue: #4a9eff;
+    --blue-dim: rgba(74,158,255,0.12);
+    --amber: #f5a623;
+    --amber-dim: rgba(245,166,35,0.12);
+    --coral: #ff6b5b;
+    --coral-dim: rgba(255,107,91,0.12);
+    --purple: #9b7ff4;
+    --purple-dim: rgba(155,127,244,0.12);
+    --green: #5dca8a;
+    --red: #ff5f5f;
+    --sidebar-w: 220px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    min-height: 100vh;
+    font-size: 13px;
+  }
+
+  /* SIDEBAR */
+  .sidebar {
+    width: var(--sidebar-w);
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    z-index: 100;
+  }
+
+  .sidebar-logo {
+    padding: 20px 18px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .sidebar-logo .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .logo-icon {
+    width: 32px; height: 32px;
+    background: var(--teal-dim);
+    border: 1px solid rgba(31,201,154,0.3);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  .logo-icon svg { width: 16px; height: 16px; }
+
+  .brand-name { font-size: 15px; font-weight: 600; color: var(--text); }
+  .brand-sub { font-size: 10px; color: var(--muted); margin-top: 1px; font-family: 'DM Mono', monospace; letter-spacing: 0.05em; }
+
+  .sidebar-section { padding: 14px 10px 6px; }
+  .sidebar-section-label {
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--hint);
+    padding: 0 8px;
+    margin-bottom: 4px;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 8px 10px;
+    border-radius: 7px;
+    cursor: pointer;
+    color: var(--muted);
+    font-size: 12.5px;
+    font-weight: 400;
+    transition: all 0.15s;
+    margin-bottom: 1px;
+    border: 1px solid transparent;
+  }
+
+  .nav-item:hover { background: var(--surface2); color: var(--text); }
+
+  .nav-item.active {
+    background: var(--teal-dim);
+    color: var(--teal);
+    border-color: rgba(31,201,154,0.2);
+    font-weight: 500;
+  }
+
+  .nav-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .nav-item .nav-num {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    margin-left: auto;
+    color: var(--hint);
+  }
+
+  .nav-item.active .nav-num { color: var(--teal); opacity: 0.6; }
+
+  .sidebar-bottom {
+    margin-top: auto;
+    padding: 12px;
+    border-top: 1px solid var(--border);
+  }
+
+  .data-badge {
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  .data-badge strong { color: var(--teal); font-family: 'DM Mono', monospace; display: block; font-size: 13px; margin-bottom: 2px; }
+
+  /* MAIN */
+  .main {
+    margin-left: var(--sidebar-w);
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+
+  /* TOPBAR */
+  .topbar {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 24px;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+
+  .topbar-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .breadcrumb .current { color: var(--text); font-weight: 500; }
+
+  .tab-strip {
+    display: flex;
+    gap: 2px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 3px;
+  }
+
+  .tab-btn {
+    padding: 5px 14px;
+    border-radius: 6px;
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+
+  .tab-btn:hover { color: var(--text); }
+  .tab-btn.active { background: var(--surface); color: var(--text); font-weight: 500; }
+
+  .topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .filter-pill {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: 11px;
+    color: var(--muted);
+    cursor: pointer;
+  }
+
+  .filter-pill select {
+    background: transparent;
+    border: none;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11px;
+    cursor: pointer;
+    outline: none;
+  }
+
+  .filter-pill select option { background: var(--surface2); }
+
+  /* CONTENT */
+  .content {
+    padding: 20px 24px;
+    flex: 1;
+  }
+
+  .dashboard-view { display: none; }
+  .dashboard-view.active { display: block; }
+
+  /* KPI STRIP */
+  .kpi-strip {
+    display: grid;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  .kpi-strip.cols-4 { grid-template-columns: repeat(4, 1fr); }
+  .kpi-strip.cols-5 { grid-template-columns: repeat(5, 1fr); }
+
+  .kpi-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .kpi-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+  }
+
+  .kpi-card.teal::before { background: var(--teal); }
+  .kpi-card.blue::before { background: var(--blue); }
+  .kpi-card.amber::before { background: var(--amber); }
+  .kpi-card.coral::before { background: var(--coral); }
+  .kpi-card.purple::before { background: var(--purple); }
+
+  .kpi-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 6px; }
+  .kpi-value { font-size: 24px; font-weight: 600; font-family: 'DM Mono', monospace; color: var(--text); line-height: 1; }
+  .kpi-delta {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 11px;
+    margin-top: 5px;
+    font-family: 'DM Mono', monospace;
+  }
+  .kpi-delta.up { color: var(--green); }
+  .kpi-delta.down { color: var(--red); }
+  .kpi-sub { font-size: 10px; color: var(--hint); margin-top: 3px; }
+
+  /* CHART GRID */
+  .chart-grid {
+    display: grid;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  .chart-grid.cols-2 { grid-template-columns: 1fr 1fr; }
+  .chart-grid.cols-3 { grid-template-columns: 2fr 1fr 1fr; }
+  .chart-grid.cols-2-1 { grid-template-columns: 2fr 1fr; }
+  .chart-grid.cols-1-2 { grid-template-columns: 1fr 2fr; }
+
+  .chart-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 18px;
+  }
+
+  .chart-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 14px;
+  }
+
+  .chart-title { font-size: 12.5px; font-weight: 500; color: var(--text); }
+  .chart-sub { font-size: 10.5px; color: var(--muted); margin-top: 2px; }
+
+  .chart-badge {
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-family: 'DM Mono', monospace;
+    white-space: nowrap;
+  }
+
+  .badge-teal { background: var(--teal-dim); color: var(--teal); }
+  .badge-blue { background: var(--blue-dim); color: var(--blue); }
+  .badge-amber { background: var(--amber-dim); color: var(--amber); }
+  .badge-coral { background: var(--coral-dim); color: var(--coral); }
+  .badge-purple { background: var(--purple-dim); color: var(--purple); }
+
+  .chart-wrap { position: relative; width: 100%; }
+
+  /* LEGEND */
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 10px;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  .legend-swatch {
+    width: 8px; height: 8px;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+
+  /* TABLE */
+  .data-table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+  .data-table th {
+    text-align: left;
+    padding: 7px 10px;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--hint);
+    border-bottom: 1px solid var(--border);
+  }
+  .data-table td {
+    padding: 8px 10px;
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
+  }
+  .data-table tr:last-child td { border-bottom: none; }
+  .data-table tr:hover td { background: var(--surface2); color: var(--text); }
+
+  .status-dot {
+    display: inline-block;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    margin-right: 5px;
+  }
+
+  /* ANOMALY BANNER */
+  .anomaly-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(255,95,95,0.08);
+    border: 1px solid rgba(255,95,95,0.2);
+    border-radius: 8px;
+    padding: 9px 14px;
+    margin-bottom: 12px;
+    font-size: 11.5px;
+    color: #ff9e9e;
+  }
+
+  .anomaly-bar .icon { font-size: 14px; flex-shrink: 0; }
+
+  /* GAUGE */
+  .gauge-wrap { display: flex; flex-direction: column; align-items: center; padding: 10px 0; }
+  .gauge-val { font-size: 28px; font-weight: 600; font-family: 'DM Mono', monospace; }
+  .gauge-target { font-size: 10px; color: var(--muted); margin-top: 4px; }
+
+  /* WATERFALL HELPERS */
+  .wf-bar { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .wf-lbl { font-size: 10px; color: var(--muted); text-align: center; }
+
+  /* SCROLL */
+  .scrollable { overflow-x: auto; }
+
+  /* POWER BI BADGE */
+  .pbi-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: 10px;
+    color: var(--hint);
+    font-family: 'DM Mono', monospace;
+  }
+
+  .pbi-dot { width: 6px; height: 6px; border-radius: 50%; background: #F2C811; }
+
+  /* ANNOTATION */
+  .annotation {
+    font-size: 10.5px;
+    color: var(--muted);
+    background: var(--surface2);
+    border-left: 2px solid var(--amber);
+    padding: 6px 10px;
+    border-radius: 0 6px 6px 0;
+    margin-top: 10px;
+  }
+  .annotation strong { color: var(--amber); }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="brand">
+      <div class="logo-icon">
+        <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M8 2C8 2 5 5 5 9C5 10.657 6.343 12 8 12C9.657 12 11 10.657 11 9C11 5 8 2 8 2Z" fill="#1fc99a" opacity="0.8"/>
+          <path d="M8 12V15" stroke="#1fc99a" stroke-width="1.5" stroke-linecap="round"/>
+          <path d="M6 14H10" stroke="#1fc99a" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div>
+        <div class="brand-name">Cedar</div>
+        <div class="brand-sub">Analytics Suite</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Dashboards</div>
+    <div class="nav-item active" onclick="switchView(0, this)">
+      <span class="nav-dot" style="background:#4a9eff"></span>
+      Revenue &amp; Pipeline
+      <span class="nav-num">01</span>
+    </div>
+    <div class="nav-item" onclick="switchView(1, this)">
+      <span class="nav-dot" style="background:#1fc99a"></span>
+      Customer Health
+      <span class="nav-num">02</span>
+    </div>
+    <div class="nav-item" onclick="switchView(2, this)">
+      <span class="nav-dot" style="background:#f5a623"></span>
+      Deal Quality
+      <span class="nav-num">03</span>
+    </div>
+    <div class="nav-item" onclick="switchView(3, this)">
+      <span class="nav-dot" style="background:#9b7ff4"></span>
+      ESG &amp; Recovery
+      <span class="nav-num">04</span>
+    </div>
+    <div class="nav-item" onclick="switchView(4, this)">
+      <span class="nav-dot" style="background:#ff6b5b"></span>
+      Executive Scorecard
+      <span class="nav-num">05</span>
+    </div>
+  </div>
+
+  <div class="sidebar-section" style="margin-top:8px">
+    <div class="sidebar-section-label">Data Sources</div>
+    <div style="padding:0 8px;display:flex;flex-direction:column;gap:5px">
+      <div style="font-size:10.5px;color:var(--hint);display:flex;align-items:center;gap:6px"><span style="width:5px;height:5px;border-radius:50%;background:var(--teal);display:inline-block"></span>01_revenue_pipeline.csv</div>
+      <div style="font-size:10.5px;color:var(--hint);display:flex;align-items:center;gap:6px"><span style="width:5px;height:5px;border-radius:50%;background:var(--teal);display:inline-block"></span>02_customer_health.csv</div>
+      <div style="font-size:10.5px;color:var(--hint);display:flex;align-items:center;gap:6px"><span style="width:5px;height:5px;border-radius:50%;background:var(--teal);display:inline-block"></span>03_deal_quality.csv</div>
+      <div style="font-size:10.5px;color:var(--hint);display:flex;align-items:center;gap:6px"><span style="width:5px;height:5px;border-radius:50%;background:var(--teal);display:inline-block"></span>04_esg_value_recovery.csv</div>
+      <div style="font-size:10.5px;color:var(--hint);display:flex;align-items:center;gap:6px"><span style="width:5px;height:5px;border-radius:50%;background:var(--teal);display:inline-block"></span>05_executive_scorecard.csv</div>
+    </div>
+  </div>
+
+  <div class="sidebar-bottom">
+    <div class="data-badge">
+      <strong>6 quarters</strong>
+      Q1 2024 — Q2 2025
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="breadcrumb">
+        <span>Cedar Analytics</span>
+        <span style="color:var(--hint)">›</span>
+        <span class="current" id="topbar-title">Revenue &amp; Pipeline</span>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <div class="filter-pill">
+        <span style="color:var(--hint)">Period:</span>
+        <select id="period-filter" onchange="updateCharts()">
+          <option>All quarters</option>
+          <option>2024 only</option>
+          <option>2025 only</option>
+        </select>
+      </div>
+      <div class="pbi-badge"><span class="pbi-dot"></span>Power BI mockup</div>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- ══════════════════════════════════════════ -->
+    <!-- VIEW 1: REVENUE & PIPELINE                 -->
+    <!-- ══════════════════════════════════════════ -->
+    <div class="dashboard-view active" id="view-0">
+
+      <div class="kpi-strip cols-4">
+        <div class="kpi-card blue">
+          <div class="kpi-label">Total ACV — Q2 2025</div>
+          <div class="kpi-value">$16.1M</div>
+          <div class="kpi-delta up">▲ 18.2% QoQ</div>
+          <div class="kpi-sub">vs. $13.6M Q1 2025</div>
+        </div>
+        <div class="kpi-card teal">
+          <div class="kpi-label">SmartERP attach rate</div>
+          <div class="kpi-value">47%</div>
+          <div class="kpi-delta up">▲ 6pp QoQ</div>
+          <div class="kpi-sub">Target: 60% by Q4 2025</div>
+        </div>
+        <div class="kpi-card amber">
+          <div class="kpi-label">Win rate</div>
+          <div class="kpi-value">91%</div>
+          <div class="kpi-delta up">▲ 2pp QoQ</div>
+          <div class="kpi-sub">42 won / 4 lost</div>
+        </div>
+        <div class="kpi-card coral">
+          <div class="kpi-label">Fastest-growing vertical</div>
+          <div class="kpi-value">Healthcare</div>
+          <div class="kpi-delta up">▲ 38.5% QoQ</div>
+          <div class="kpi-sub">$1.8M ACV Q2 2025</div>
+        </div>
+      </div>
+
+      <div class="chart-grid cols-2-1">
+        <div class="chart-card">
+          <div class="chart-header">
+            <div>
+              <div class="chart-title">Revenue by vertical + SmartERP attach rate</div>
+              <div class="chart-sub">Stacked bar (ACV $M) with line overlay (attach %) — source: 01_revenue_pipeline.csv</div>
+            </div>
+            <span class="chart-badge badge-blue">Stacked bar + line</span>
+          </div>
+          <div class="legend">
+            <div class="legend-item"><span class="legend-swatch" style="background:#B5D4F4"></span>Financial services</div>
+            <div class="legend-item"><span class="legend-swatch" style="background:#4a9eff"></span>Technology & cloud</div>
+            <div class="legend-item"><span class="legend-swatch" style="background:#185FA5"></span>Telecom & media</div>
+            <div class="legend-item"><span class="legend-swatch" style="background:#9FE1CB"></span>Healthcare</div>
+            <div class="legend-item"><span class="legend-swatch" style="background:#1fc99a"></span>Manufacturing</div>
+            <div class="legend-item"><span class="legend-swatch" style="background:#f5a623;height:2px;width:14px;border-radius:0"></span>Attach %</div>
+          </div>
+          <div class="chart-wrap" style="height:240px">
+            <canvas id="c_rev_stack" role="img" aria-label="Stacked bar chart of revenue by vertical per quarter with SmartERP attach rate overlay">Revenue by vertical Q1 2024 to Q2 2025.</canvas>
+          </div>
+          <div class="annotation"><strong>Anomaly signal:</strong> Healthcare ACV grew 260% over 6 quarters — now the #2 growth vertical. Manufacturing lagging — long sales cycles pulling attach rate down.</div>
+        </div>
+
+        <div class="chart-card">
+          <div class="chart-header">
+            <div>
+              <div class="chart-title">Win / loss by competitor</div>
+              <div class="chart-sub">Horizontal bar — source: 01_revenue_pipeline.csv</div>
+            </div>
+            <span class="chart-badge badge-coral">Horizontal bar</span>
+          </div>
+          <div class="chart-wrap" style="height:300px">
+            <canvas id="c_winloss" role="img" aria-label="Win loss rate by competitor">Win loss rates.</canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="chart-grid cols-2">
+        <div class="chart-card">
+          <div class="chart-header">
+            <div>
+              <div class="chart-title">Services revenue mix — lifecycle vs. end-of-lifecycle</div>
+              <div class="chart-sub">Donut — source: 01_revenue_pipeline.csv</div>
+            </div>
+            <span class="chart-badge badge-teal">Donut</span>
+          </div>
+          <div class="chart-wrap" style="height:200px">
+            <canvas id="c_mix_donut" role="img" aria-label="Services revenue mix donut chart">Revenue mix.</canvas>
+          </div>
+          <div class="legend" style="justify-content:center;margin-top:8px">
+            <div class="legend-item"><span class="legend-swatch" style="background:#4a9eff"></span>Lifecycle services 62%</div>
+            <div class="legend-item"><span class="legend-swatch" style="background:#1fc99a"></span>ITAD only 38%</div>
+          </div>
+        </div>
+
+        <div class="chart-card">
+          <div class="chart-header">
+            <div>
+              <div class="chart-title">New ACV trend by quarter — all verticals</div>
+              <div class="chart-sub">Line chart — source: 01_revenue_pipeline.csv</div>
+            </div>
+            <span class="chart-badge badge-blue">Line</span>
+          </div>
+          <div class="chart-wrap" style="height:200px">
+            <canvas id="c_acv_trend" role="img" aria-label="ACV trend line chart by quarter">ACV trend.</canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════ -->
+    <!-- VIEW 2: CUSTOMER HEALTH                    -->
+    <!-- ══════════════════════════════════════════ -->
+    <div class="dashboard-view" id="view-1">
+      <div class="anomaly-bar">
+        <span class="icon">⚠</span>
+        <span><strong style="color:#ff5f5f">Watch:</strong> Meridian Telecom (ACC003) has maintained NRR at or below 103% for 6 consecutive quarters with no SmartERP adoption — high churn risk at Q3 2026 renewal.</span>
+      </div>
+
+      <div class="kpi-strip cols-4">
+        <div class="kpi-card teal">
+          <div class="kpi-label">Portfolio NRR — Q2 2025</div>
+          <div class="kpi-value">117%</div>
+          <div class="kpi-delta up">▲ 3pp QoQ</div>
+          <div class="kpi-sub">Target: ≥ 110%</div>
+        </div>
+        <div class="kpi-card blue">
+          <div class="kpi-label">Avg NPS score</div>
+          <div class="kpi-value">+71</div>
+          <div class="kpi-delta up">▲ 2pts QoQ</div>
+          <div class="kpi-sub">Benchmark: +70</div>
+        </div>
+        <div class="kpi-card amber">
+          <div class="kpi-label">Avg time-to-value</div>
+          <div class="kpi-value">33 days</div>
+          <div class="kpi-delta up">▼ 2 days QoQ</div>
+          <div class="kpi-sub">Target: ≤ 30 days</div>
+        </div>
+        <div class="kpi-card coral">
+          <div class="kpi-label">S&amp;P 500 top 10 logos</div>
+          <div class="kpi-value">5 / 10</div>
+          <div class="kpi-delta up">▲ 1 logo QoQ</div>
+          <div class="kpi-sub">50% penetration</div>
+        </div>
+      </div>
+
+      <div class="chart-grid cols-2">
+        <div class="chart-card">
+          <div class="chart-header">
+            <div>
+              <div class="chart-title">NRR % trend + NPS trend</div>
+              <div class="chart-sub">Dual-axis line — source: 02_customer_health.csv</div>
+            </div>
+            <span class="chart-badge badge-teal">Dual-axis line</span>
+          </div>
+          <div class="legend">
+            <div class="legend-item"><span class="legend-swatch" style="background:#1fc99a"></span>Portfolio NRR %</div>
+            <div class="legend-item"><span class="legend-swatch" style="background:#4a9eff"></span>Avg NPS score</div>
+            <div class="legend-item"><span class="legend-swatch" style="background:#ff6b5b;height:2px;width:14px;border-radius:0"></span>NPS target (+70)</div>
+          </div>
+          <div class="chart-wrap" style="height:240px">
+            <canvas id="c_nrr_nps" role="img" aria-label="NRR and NPS trend dual axis line chart">NRR and NPS over time.</canvas>
+          </div>
+          <div class="annotation"><strong>Q4 2024 dip:</strong> NPS dropped 1pt and NRR softened from 112% to 109% — both recovered in Q1 2025. Watch for correlated dips as a leading churn signal.</div>
+        </div>
+
+        <div class="chart-card">
+          <div class="chart-header">
+            <div>
+              <div class="chart-title">Account health matrix</div>
+              <div class="chart-sub">Status table — source: 02_customer_health.csv (Q2 2025)</div>
+            </div>
+            <span class="chart-badge badge-amber">Status table</span>
+          </div>
+          <div class="scrollable">
+            <table class="data-table">
+              <thead>
+                <tr><th>Account</th><th>Vertical</th><th>NRR</th><th>NPS</th><th>SmartERP</th><th>Status</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>Global Trust Bank</td><td>Fin. Services</td><td style="color:var(--green)">121%</td><td style="color:var(--green)">+77</td><td style="color:var(--teal)">✓</td><td><span class="status-dot" style="background:var(--green)"></span>Healthy</td></tr>
+                <tr><td>CloudCore Tech</td><td>Technology</td><td style="color:var(--green)">118%</td><td style="color:var(--green)">+73</td><td style="color:var(--teal)">✓</td><td><span class="status-dot" style="background:var(--green)"></span>Healthy</td></tr>
+                <tr><td>NexGen Cloud</td><td>Technology</td><td style="color:var(--green)">117%</td><td style="color:var(--green)">+74</td><td style="color:var(--teal)">✓</td><td><span class="status-dot" style="background:var(--green)"></span>Healthy</td></tr>
+                <tr><td>Apex Financial</td><td>Fin. Services</td><td style="color:var(--green)">117%</td><td style="color:var(--green)">+71</td><td style="color:var(--teal)">✓</td><td><span class="status-dot" style="background:var(--green)"></span>Healthy</td></tr>
+                <tr><td>HealthFirst Systems</td><td>Healthcare</td><td style="color:var(--blue)">113%</td><td style="color:var(--blue)">+68</td><td style="color:var(--teal)">✓</td><td><span class="status-dot" style="background:var(--blue)"></span>Healthy</td></tr>
+                <tr><td>Vertex Media</td><td>Telecom</td><td style="color:var(--blue)">114%</td><td style="color:var(--blue)">+70</td><td style="color:var(--teal)">✓</td><td><span class="status-dot" style="background:var(--blue)"></span>Healthy</td></tr>
+                <tr><td>Precision OEM</td><td>Manufacturing</td><td style="color:var(--amber)">109%</td><td style="color:var(--amber)">+64</td><td style="color:var(--teal)">✓</td><td><span class="status-dot" style="background:var(--amber)"></span>Improving</td></tr>
+                <tr><td style="color:var(--red)">Meridian Telecom</td><td>Telecom</td><td style="color:var(--red)">106%</td><td style="color:var(--red)">+61</td><td style="color:var(--red)">✗</td><td><span class="status-dot" style="background:var(--red)"></span>At Risk</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="chart-grid cols-2">
+        <div class="chart-card">
+          <div class="chart-header">
+            <div>
+              <div class="chart-title">Time-to-value improvement by account</div>
+              <div class="chart-sub">Horizontal bar — source: 02_customer_health.csv</div>
+            </div>
+            <span class="chart-badge badge-blue">Horizontal bar</span>
+          </div>
+          <div class="chart-wrap" style="height:220px">
+            <canvas id="c_ttv" role="img" aria-label="Time to value by account bar chart">Time to value by account.</canvas>
+          </div>
+        </div>
+
+        <div class="chart-card">
+          <div class="chart-header">
+            <div>
+              <div class="chart-title">ARR by account — Q2 2025</div>
+              <div class="chart-sub">Treemap (simulated) — source: 02_customer_health.csv</div>
+            </div>
+            <span class="chart-badge badge-teal">Treemap</span>
+          </div>
+          <div id="treemap" style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;padding:4px">
+            <div style="background:rgba(74,158,255,0.15);border:1px solid rgba(74,158,255,0.2);border-radius:6px;padding:10px;grid-column:span 1"><div style="font-size:10px;color:var(--muted)">Global Trust Bank</div><div style="font-size:14px;font-weight:600;color:#4a9eff;font-family:'DM Mono',monospace">$1.11M</div></div>
+            <div style="background:rgba(31,201,154,0.15);border:1px solid rgba(31,201,154,0.2);border-radius:6px;padding:10px"><div style="font-size:10px;color:var(--muted)">CloudCore Tech</div><div style="font-size:14px;font-weight:600;color:#1fc99a;font-family:'DM Mono',monospace">$800K</div></div>
+            <div style="background:rgba(31,201,154,0.1);border:1px solid rgba(31,201,154,0.15);border-radius:6px;padding:10px"><div style="font-size:10px;color:var(--muted)">NexGen Cloud</div><div style="font-size:14px;font-weight:600;color:#1fc99a;font-family:'DM Mono',monospace">$720K</div></div>
+            <div style="background:rgba(74,158,255,0.1);border:1px solid rgba(74,158,255,0.15);border-radius:6px;padding:10px"><div style="font-size:10px;color:var(--muted)">Apex Financial</div><div style="font-size:14px;font-weight:600;color:#4a9eff;font-family:'DM Mono',monospace">$635K</div></div>
+            <div style="background:rgba(155,127,244,0.1);border:1px solid rgba(155,127,244,0.15);border-radius:6px;padding:10px"><div style="font-size:10px;color:var(--muted)">HealthFirst</div><div style="font-size:14px;font-weight:600;color:#9b7ff4;font-family:'DM Mono',monospace">$315K</div></div>
+            <div style="background:rgba(245,166,35,0.1);border:1px solid rgba(245,166,35,0.15);border-radius:6px;padding:10px"><div style="font-size:10px;color:var(--muted)">Vertex Media</div><div style="font-size:14px;font-weight:600;color:#f5a623;font-family:'DM Mono',monospace">$330K</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════ -->
+    <!-- VIEW 3: DEAL QUALITY & EFFICIENCY          -->
+    <!-- ══════════════════════════════════════════ -->
+    <div class="dashboard-view" id="view-2">
+      <div class="kpi-strip cols-4">
+        <div class="kpi-card amber">
+          <div class="kpi-label">Avg deal size — Q2 2025</div>
+          <div class="kpi-value">$429K</div>
+          <div class="kpi-delta up">▲ 12.3% QoQ</div>
+          <div class="kpi-sub">Platform deals avg $580K</div>
+        </div>
+        <div class="kpi-card blue">
+          <div class="kpi-label">Avg sales cycle</div>
+          <div class="kpi-value">91 days</div>
+          <div class="kpi-delta up">▼ 4 days QoQ</div>
+          <div class="kpi-sub">Tech & Cloud: 46 days</div>
+        </div>
+        <div class="kpi-card teal">
+          <div class="kpi-label">Bundle rate</div>
+          <div class="kpi-value">47%</div>
+          <div class="kpi-delta up">▲ 6pp QoQ</div>
+          <div class="kpi-sub">3+ services bundled</div>
+        </div>
+        <div class="kpi-card coral">
+          <div class="kpi-label">Demo-to-close</div>
+          <div class="kpi-value">82%</div>
+          <div class="kpi-delta down">▼ 2pp QoQ</div>
+          <div class="kpi-sub">Target: 85%</div>
+        </div>
+      </div>
+
+      <div class="chart-grid cols-2">
+        <div class="chart-card">
+          <div class="chart-header">
+            <div>
+              <div class="chart-title">Deal size vs. sales cycle — scatter by vertical</div>
+              <div class="chart-sub">Bubble chart (size = bundle count) — source: 03_deal_quality.csv</div>
+            </div>
+            <span class="chart-badge badge-amber">Bubble / scatter</span>
+          </div>
+          <div class="legend">
+            <div class="legend-item"><span class="legend-swatch" style="background:#4a9eff"></span>Fin. services</div>
+            <div class="legend-item"><span class="legend-swatch" style="background:#1fc99a"></span>Tech & cloud</div>
+            <div class="legend-item"><span class="legend-swatch" style="background:#ff6b5b"></span>Healthcare</div>
+            <div class="legend-item"><span class="legend-swatch" style="background:#f5a623"></span>Manufacturing</div>
+          </div>
+          <div class="chart-wrap" style="height:260px">
+            <canvas id="c_scatter" role="img" aria-label="Bubble chart of deal size vs sales cycle length by vertical">Deal size vs sales cycle scatter.</canvas>
+          </div>
+          <div class="annotation"><strong>ICP gap:</strong> Manufacturing deals in the bottom-right — long cycles, small deals. Healthcare moving left and up = improving ICP fit.</div>
+        </div>
+
+        <div class="chart-card">
+          <div class="chart-header">
+            <div>
+              <div class="chart-title">Sales funnel — demo to close</div>
+              <div class="chart-sub">Funnel chart — source: 03_deal_quality.csv</div>
+            </div>
+            <span class="chart-badge badge-coral">Funnel</span>
+          </div>
+          <div id="funnel" style="padding:20px 0">
+            <div style="display:flex;flex-direction:column;gap:6px;align-items:center">
+              <div style="width:100%;background:rgba(74,158,255,0.2);border:1px solid rgba(74,158,255,0.3);border-radius:6px;padding:9px;text-align:center">
+                <span style="font-size:11px;color:var(--muted)">Demos conducted</span>
+                <span style="font-family:'DM Mono',monospace;color:#4a9eff;margin-left:8px;font-weight:500">51</span>
+              </div>
+              <div style="width:88%;background:rgba(31,201,154,0.2);border:1px solid rgba(31,201,154,0.3);border-radius:6px;padding:9px;text-align:center">
+                <span style="font-size:11px;color:var(--muted)">Qualified to pilot</span>
+                <span style="font-family:'DM Mono',monospace;color:#1fc99a;margin-left:8px;font-weight:500">44</span>
+                <span style="font-size:10px;color:var(--hint);margin-left:5px">86%</span>
+              </div>
+              <div style="width:76%;background:rgba(155,127,244,0.2);border:1px solid rgba(155,127,244,0.3);border-radius:6px;padding:9px;text-align:center">
+                <span style="font-size:11px;color:var(--muted)">Proposal accepted</span>
+                <span style="font-family:'DM Mono',monospace;color:#9b7ff4;margin-left:8px;font-weight:500">46</span>
+                <span style="font-size:10px;color:var(--hint);margin-left:5px">90%</span>
+              </div>
+              <div style="width:64%;background:rgba(245,166,35,0.2);border:1px solid rgba(245,166,35,0.3);border-radius:6px;padding:9px;text-align:center">
+                <span style="font-size:11px;color:var(--muted)">Negotiation</span>
+                <span style="font-family:'DM Mono',monospace;color:#f5a623;margin-left:8px;font-weight:500">43</span>
+                <span style="font-size:10px;color:var(--hint);margin-left:5px">93%</span>
+              </div>
+              <div style="width:82%;background:rgba(93,202,138,0.2);border:1px solid rgba(93,202,138,0.3);border-radius:6px;padding:9px;text-align:center">
+                <span style="font-size:11px;color:var(--muted)">Closed won</span>
+                <span style="font-family:'DM Mono',monospace;color:var(--green);margin-left:8px;font-weight:500">42</span>
+                <span style="font-size:10px;color:var(--hint);margin-left:5px">91% overall</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="chart-grid cols-2">
+        <div class="chart-card">
+          <div class="chart-header">
+            <div>
+              <div class="chart-title">Sales cycle trend by vertical</div>
+              <div class="chart-sub">Line — source: 03_deal_quality.csv</div>
+            </div>
+            <span class="chart-badge badge-blue">Multi-line</span>
+          </div>
+          <div class="chart-wrap" style="height:200px">
+            <canvas id="c_cycle_trend" role="img" aria-label="Sales cycle trend by vertical line chart">Sales cycle trends.</canvas>
+          </div>
+        </div>
+
+        <div class="chart-card">
+          <div class="chart-header">
+            <div>
+              <div class="chart-title">Bundle rate trend + avg deal size</div>
+              <div class="chart-sub">Combo chart — source: 03_deal_quality.csv</div>
+            </div>
+            <span class="chart-badge badge-amber">Bar + line</span>
+          </div>
+          <div class="chart-wrap" style="height:200px">
+            <canvas id="c_bundle" role="img" aria-label="Bundle rate and deal size trend">Bundle rate and deal size.</canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════ -->
+    <!-- VIEW 4: ESG & VALUE RECOVERY               -->
+    <!-- ══════════════════════════════════════════ -->
+    <div class="dashboard-view" id="view-3">
+      <div class="kpi-strip cols-4">
+        <div class="kpi-card purple">
+          <div class="kpi-label">Avg circularity rate</div>
+          <div class="kpi-value">43%</div>
+          <div class="kpi-delta up">▲ 2pp QoQ</div>
+          <div class="kpi-sub">Target: 40% ✓ achieved Q1 25</div>
+        </div>
+        <div class="kpi-card teal">
+          <div class="kpi-label">Total recovery value</div>
+          <div class="kpi-value">$733K</div>
+          <div class="kpi-delta up">▲ 14.5% QoQ</div>
+          <div class="kpi-sub">Returned to clients Q2 2025</div>
+        </div>
+        <div class="kpi-card blue">
+          <div class="kpi-label">CO₂ avoided</div>
+          <div class="kpi-value">210K kg</div>
+          <div class="kpi-delta up">▲ 13.4% QoQ</div>
+          <div class="kpi-sub">Cumulative: 1.03M kg</div>
+        </div>
+        <div class="kpi-card amber">
+          <div class="kpi-label">ESG reports generated</div>
+          <div class="kpi-value">29</div>
+          <div class="kpi-delta up">▲ 4 QoQ</div>
+          <div class="kpi-sub">3.2 reports / account</div>
+        </div>
+      </div>
+
+      <div class="chart-grid cols-2-1">
+        <div class="chart-card">
+          <div class="chart-header">
+            <div>
+              <div class="chart-title">Circularity rate vs. 40% benchmark + recovery value</div>
+              <div class="chart-sub">Combo bar + dual line — source: 04_esg_value_recovery.csv</div>
+            </div>
+            <span class="chart-badge badge-purple">Bar + line + benchmark</span>
+          </div>
+          <div class="legend">
+            <div class="legend-item"><span class="legend-swatch" style="background:#9FE1CB"></span>Avg circularity %</div>
+            <div class="legend-item"><span class="legend-swatch" style="background:#ff6b5b;height:2px;width:14px;border-radius:0"></span>40% target</div>
+            <div class="legend-item"><span class="legend-swatch" style="background:#4a9eff"></span>Recovery value ($K)</div>
+          </div>
+          <div class="chart-wrap" style="height:230px">
+            <canvas id="c_esg_combo" role="img" aria-label="Circularity rate and recovery value combo chart">ESG and recovery combo.</canvas>
+          </div>
+          <div class="annotation"><strong>Milestone:</strong> Crossed 40% circularity target in Q1 2025 — use this as a proof point in renewal and upsell conversations.</div>
+        </div>
+
+        <div class="chart-card">
+          <div class="chart-header">
+            <div>
+              <div class="chart-title">ESG report usage by account</div>
+              <div class="chart-sub">Bar — Q2 2025 — source: 04_esg_value_recovery.csv</div>
+            </div>
+            <span class="chart-badge badge-purple">Bar</span>
+          </div>
+          <div class="chart-wrap" style="height:280px">
+            <canvas id="c_esg_usage" role="img" aria-label="ESG report usage by account">ESG report usage.</canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="chart-grid cols-2">
+        <div class="chart-card">
+          <div class="chart-header">
+            <div>
+              <div class="chart-title">Recovery value above benchmark — by account</div>
+              <div class="chart-sub">Waterfall bar — source: 04_esg_value_recovery.csv (Q2 2025)</div>
+            </div>
+            <span class="chart-badge badge-teal">Waterfall bar</span>
+          </div>
+          <div class="chart-wrap" style="height:200px">
+            <canvas id="c_recovery_wf" role="img" aria-label="Recovery value above benchmark by account">Recovery above benchmark.</canvas>
+          </div>
+          <div class="annotation"><strong>Gap flagged:</strong> Meridian Telecom recovery rate (36%) still below 38% benchmark — no SmartERP, manual tracking leading to missed reuse opportunities.</div>
+        </div>
+
+        <div class="chart-card">
+          <div class="chart-header">
+            <div>
+              <div class="chart-title">Assets processed: reuse vs. recycle vs. dispose</div>
+              <div class="chart-sub">Stacked area — source: 04_esg_value_recovery.csv</div>
+            </div>
+            <span class="chart-badge badge-purple">Stacked area</span>
+          </div>
+          <div class="chart-wrap" style="height:200px">
+            <canvas id="c_assets_area" role="img" aria-label="Assets processed stacked area chart">Asset disposition breakdown.</canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════ -->
+    <!-- VIEW 5: EXECUTIVE SCORECARD                -->
+    <!-- ══════════════════════════════════════════ -->
+    <div class="dashboard-view" id="view-4">
+      <div class="kpi-strip cols-5">
+        <div class="kpi-card blue">
+          <div class="kpi-label">Total ACV</div>
+          <div class="kpi-value">$16.1M</div>
+          <div class="kpi-delta up">▲ 164% since Q1 24</div>
+        </div>
+        <div class="kpi-card teal">
+          <div class="kpi-label">NRR</div>
+          <div class="kpi-value">117%</div>
+          <div class="kpi-delta up">▲ 9pp since Q1 24</div>
+        </div>
+        <div class="kpi-card amber">
+          <div class="kpi-label">SmartERP attach</div>
+          <div class="kpi-value">47%</div>
+          <div class="kpi-delta up">▲ 23pp since Q1 24</div>
+        </div>
+        <div class="kpi-card purple">
+          <div class="kpi-label">Circularity rate</div>
+          <div class="kpi-value">43%</div>
+          <div class="kpi-delta up">▲ 10pp since Q1 24</div>
+        </div>
+        <div class="kpi-card coral">
+          <div class="kpi-label">NPS score</div>
+          <div class="kpi-value">+71</div>
+          <div class="kpi-delta up">▲ 7pts since Q1 24</div>
+        </div>
+      </div>
+
+      <div class="chart-grid cols-2">
+        <div class="chart-card">
+          <div class="chart-header">
+            <div>
+              <div class="chart-title">NRR waterfall — Q2 2025</div>
+              <div class="chart-sub">Waterfall — source: 05_executive_scorecard.csv</div>
+            </div>
+            <span class="chart-badge badge-coral">Waterfall</span>
+          </div>
+          <div class="chart-wrap" style="height:240px">
+            <canvas id="c_nrr_wf" role="img" aria-label="NRR waterfall chart showing growth components">NRR waterfall Q2 2025.</canvas>
+          </div>
+          <div class="annotation"><strong>Healthy signal:</strong> Expansion ($4.9M) outpacing new logo ($6.4M) — platform stickiness growing. Churn ($240K) at all-time low.</div>
+        </div>
+
+        <div class="chart-card">
+          <div class="chart-header">
+            <div>
+              <div class="chart-title">Executive KPI sparklines — all metrics, all quarters</div>
+              <div class="chart-sub">Multi-sparkline — source: 05_executive_scorecard.csv</div>
+            </div>
+            <span class="chart-badge badge-blue">Sparklines</span>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:12px;padding:4px 0">
+            <div id="spark-wrap"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="chart-grid cols-2">
+        <div class="chart-card">
+          <div class="chart-header">
+            <div>
+              <div class="chart-title">Total ACV + pipeline value trend</div>
+              <div class="chart-sub">Line — source: 05_executive_scorecard.csv</div>
+            </div>
+            <span class="chart-badge badge-blue">Line</span>
+          </div>
+          <div class="chart-wrap" style="height:200px">
+            <canvas id="c_acv_pipe" role="img" aria-label="ACV and pipeline trend line chart">ACV vs pipeline.</canvas>
+          </div>
+        </div>
+
+        <div class="chart-card">
+          <div class="chart-header">
+            <div>
+              <div class="chart-title">All KPIs — period-over-period delta table</div>
+              <div class="chart-sub">Source: 05_executive_scorecard.csv</div>
+            </div>
+            <span class="chart-badge badge-coral">Delta table</span>
+          </div>
+          <table class="data-table">
+            <thead>
+              <tr><th>Metric</th><th>Q1 2025</th><th>Q2 2025</th><th>Change</th><th>Status</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Total ACV</td><td>$13.6M</td><td>$16.1M</td><td style="color:var(--green)">+18.2%</td><td><span class="status-dot" style="background:var(--green)"></span>On track</td></tr>
+              <tr><td>NRR %</td><td>114%</td><td>117%</td><td style="color:var(--green)">+3pp</td><td><span class="status-dot" style="background:var(--green)"></span>On track</td></tr>
+              <tr><td>SmartERP attach</td><td>41%</td><td>47%</td><td style="color:var(--green)">+6pp</td><td><span class="status-dot" style="background:var(--green)"></span>On track</td></tr>
+              <tr><td>Avg NPS</td><td>+69</td><td>+71</td><td style="color:var(--green)">+2pts</td><td><span class="status-dot" style="background:var(--green)"></span>On track</td></tr>
+              <tr><td>Circularity rate</td><td>41%</td><td>43%</td><td style="color:var(--green)">+2pp</td><td><span class="status-dot" style="background:var(--green)"></span>On track</td></tr>
+              <tr><td>Sales cycle (days)</td><td>95</td><td>91</td><td style="color:var(--green)">-4 days</td><td><span class="status-dot" style="background:var(--green)"></span>Improving</td></tr>
+              <tr><td>Demo-to-close %</td><td>84%</td><td>82%</td><td style="color:var(--amber)">-2pp</td><td><span class="status-dot" style="background:var(--amber)"></span>Watch</td></tr>
+              <tr><td>Time-to-value (days)</td><td>35</td><td>33</td><td style="color:var(--amber)">-2 days</td><td><span class="status-dot" style="background:var(--amber)"></span>Near target</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<script>
+const qs = ['Q1 24','Q2 24','Q3 24','Q4 24','Q1 25','Q2 25'];
+const chartInstances = {};
+
+function destroyChart(id) {
+  if (chartInstances[id]) { chartInstances[id].destroy(); delete chartInstances[id]; }
+}
+
+function mkChart(id, cfg) {
+  destroyChart(id);
+  const c = new Chart(document.getElementById(id), cfg);
+  chartInstances[id] = c;
+  return c;
+}
+
+const gOpts = (extra={}) => ({
+  responsive: true, maintainAspectRatio: false,
+  plugins: { legend: { display: false }, tooltip: { backgroundColor: '#1e2433', titleColor: '#e8eaf0', bodyColor: '#7a8299', borderColor: 'rgba(255,255,255,0.1)', borderWidth: 1 } },
+  ...extra
+});
+
+function buildAll() {
+  // ── VIEW 1 ──
+  mkChart('c_rev_stack', {
+    type: 'bar',
+    data: {
+      labels: qs,
+      datasets: [
+        { label: 'Financial services', data: [2.12, 2.51, 2.78, 3.12, 3.62, 4.11], backgroundColor: '#B5D4F4', stack: 's' },
+        { label: 'Technology & cloud', data: [2.38, 2.72, 3.11, 3.48, 4.09, 4.68], backgroundColor: '#4a9eff', stack: 's' },
+        { label: 'Telecom & media', data: [0.9, 1.0, 1.2, 1.3, 1.5, 1.7], backgroundColor: '#185FA5', stack: 's' },
+        { label: 'Healthcare', data: [0.5, 0.6, 0.8, 1.0, 1.3, 1.8], backgroundColor: '#9FE1CB', stack: 's' },
+        { label: 'Manufacturing', data: [0.4, 0.5, 0.6, 0.7, 0.9, 1.1], backgroundColor: '#1fc99a', stack: 's' },
+        { label: 'Attach %', data: [24, 27, 31, 36, 41, 47], type: 'line', yAxisID: 'y2', borderColor: '#f5a623', backgroundColor: 'transparent', borderWidth: 2, pointRadius: 3, pointBackgroundColor: '#f5a623', tension: 0.4 }
+      ]
+    },
+    options: { ...gOpts(), scales: {
+      x: { stacked: true, grid: { display: false }, ticks: { color: '#7a8299', font: { size: 10 } } },
+      y: { stacked: true, ticks: { callback: v => '$' + v + 'M', color: '#7a8299', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.04)' } },
+      y2: { position: 'right', min: 0, max: 80, ticks: { callback: v => v + '%', color: '#f5a623', font: { size: 10 } }, grid: { display: false } }
+    }}
+  });
+
+  mkChart('c_winloss', {
+    type: 'bar',
+    data: {
+      labels: ['Iron Mountain', 'Arrow Electronics', 'Sims Lifecycle', 'Agilant', 'Internal / No vendor'],
+      datasets: [
+        { label: 'Won', data: [22, 18, 14, 10, 12], backgroundColor: '#1fc99a' },
+        { label: 'Lost', data: [2, 1, 1, 0, 1], backgroundColor: '#ff5f5f' }
+      ]
+    },
+    options: { ...gOpts(), indexAxis: 'y', scales: {
+      x: { stacked: true, ticks: { color: '#7a8299', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.04)' } },
+      y: { stacked: true, grid: { display: false }, ticks: { color: '#7a8299', font: { size: 10 } } }
+    }}
+  });
+
+  mkChart('c_mix_donut', {
+    type: 'doughnut',
+    data: { labels: ['Lifecycle services', 'ITAD only'], datasets: [{ data: [62, 38], backgroundColor: ['#4a9eff', '#1fc99a'], borderWidth: 0, hoverOffset: 4 }] },
+    options: { ...gOpts(), cutout: '65%' }
+  });
+
+  mkChart('c_acv_trend', {
+    type: 'line',
+    data: { labels: qs, datasets: [{ data: [6.1, 7.33, 9.31, 10.6, 13.62, 16.09], borderColor: '#4a9eff', backgroundColor: 'rgba(74,158,255,0.08)', fill: true, borderWidth: 2, pointRadius: 4, pointBackgroundColor: '#4a9eff', tension: 0.4 }] },
+    options: { ...gOpts(), scales: {
+      x: { grid: { display: false }, ticks: { color: '#7a8299', font: { size: 10 } } },
+      y: { ticks: { callback: v => '$' + v + 'M', color: '#7a8299', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.04)' } }
+    }}
+  });
+
+  // ── VIEW 2 ──
+  mkChart('c_nrr_nps', {
+    type: 'line',
+    data: { labels: qs, datasets: [
+      { label: 'NRR %', data: [108, 110, 112, 109, 114, 117], borderColor: '#1fc99a', backgroundColor: 'transparent', borderWidth: 2, pointRadius: 4, pointBackgroundColor: '#1fc99a', tension: 0.4, yAxisID: 'y' },
+      { label: 'NPS', data: [64, 67, 68, 67, 69, 71], borderColor: '#4a9eff', backgroundColor: 'transparent', borderWidth: 2, pointRadius: 4, pointBackgroundColor: '#4a9eff', borderDash: [5, 3], tension: 0.4, yAxisID: 'y2' },
+      { label: 'NPS target', data: [70, 70, 70, 70, 70, 70], borderColor: '#ff6b5b', backgroundColor: 'transparent', borderWidth: 1, pointRadius: 0, borderDash: [3, 3], yAxisID: 'y2' }
+    ]},
+    options: { ...gOpts(), scales: {
+      x: { grid: { display: false }, ticks: { color: '#7a8299', font: { size: 10 } } },
+      y: { min: 100, max: 125, ticks: { callback: v => v + '%', color: '#1fc99a', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.04)' } },
+      y2: { position: 'right', min: 55, max: 80, ticks: { callback: v => '+' + v, color: '#4a9eff', font: { size: 10 } }, grid: { display: false } }
+    }}
+  });
+
+  mkChart('c_ttv', {
+    type: 'bar',
+    data: {
+      labels: ['Global Trust','CloudCore','NexGen Cloud','Apex Financial','Vertex Media','HealthFirst','Precision OEM','Meridian Telecom'],
+      datasets: [{ data: [28, 33, 33, 37, 40, 45, 52, 54], backgroundColor: d => d.raw > 45 ? '#ff6b5b' : d.raw > 35 ? '#f5a623' : '#1fc99a' }]
+    },
+    options: { ...gOpts(), indexAxis: 'y', scales: {
+      x: { ticks: { callback: v => v + 'd', color: '#7a8299', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.04)' } },
+      y: { grid: { display: false }, ticks: { color: '#7a8299', font: { size: 10 } } }
+    }}
+  });
+
+  // ── VIEW 3 ──
+  mkChart('c_scatter', {
+    type: 'bubble',
+    data: { datasets: [
+      { label: 'Fin. services', data: [{x:88,y:380,r:12},{x:82,y:450,r:13},{x:78,y:490,r:14},{x:74,y:540,r:15},{x:70,y:590,r:15}], backgroundColor: 'rgba(74,158,255,0.5)', borderColor: '#4a9eff', borderWidth: 1 },
+      { label: 'Tech & cloud', data: [{x:55,y:520,r:16},{x:50,y:580,r:15},{x:48,y:620,r:17},{x:45,y:680,r:17},{x:42,y:750,r:18},{x:40,y:820,r:19}], backgroundColor: 'rgba(31,201,154,0.5)', borderColor: '#1fc99a', borderWidth: 1 },
+      { label: 'Healthcare', data: [{x:130,y:160,r:7},{x:125,y:195,r:8},{x:118,y:215,r:9},{x:110,y:235,r:9},{x:105,y:260,r:10},{x:98,y:285,r:11}], backgroundColor: 'rgba(255,107,91,0.5)', borderColor: '#ff6b5b', borderWidth: 1 },
+      { label: 'Manufacturing', data: [{x:165,y:195,r:6},{x:158,y:215,r:7},{x:148,y:235,r:8},{x:138,y:260,r:9},{x:128,y:285,r:9}], backgroundColor: 'rgba(245,166,35,0.5)', borderColor: '#f5a623', borderWidth: 1 }
+    ]},
+    options: { ...gOpts(), layout: { padding: 10 }, scales: {
+      x: { min: 20, max: 200, title: { display: true, text: 'Sales cycle (days)', color: '#7a8299', font: { size: 10 } }, ticks: { color: '#7a8299', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.04)' } },
+      y: { min: 80, max: 900, title: { display: true, text: 'Deal size ($K)', color: '#7a8299', font: { size: 10 } }, ticks: { callback: v => '$' + v + 'K', color: '#7a8299', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.04)' } }
+    }}
+  });
+
+  mkChart('c_cycle_trend', {
+    type: 'line',
+    data: { labels: qs, datasets: [
+      { label: 'Fin. services', data: [88, 85, 82, 78, 74, 70], borderColor: '#4a9eff', backgroundColor: 'transparent', borderWidth: 2, pointRadius: 3, tension: 0.4 },
+      { label: 'Tech & cloud', data: [55, 50, 48, 45, 42, 40], borderColor: '#1fc99a', backgroundColor: 'transparent', borderWidth: 2, pointRadius: 3, tension: 0.4 },
+      { label: 'Healthcare', data: [130, 125, 118, 110, 105, 98], borderColor: '#ff6b5b', backgroundColor: 'transparent', borderWidth: 2, pointRadius: 3, borderDash: [4, 3], tension: 0.4 },
+      { label: 'Manufacturing', data: [165, 158, 148, 138, 128, 118], borderColor: '#f5a623', backgroundColor: 'transparent', borderWidth: 2, pointRadius: 3, borderDash: [4, 3], tension: 0.4 }
+    ]},
+    options: { ...gOpts(), scales: {
+      x: { grid: { display: false }, ticks: { color: '#7a8299', font: { size: 10 } } },
+      y: { ticks: { callback: v => v + 'd', color: '#7a8299', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.04)' } }
+    }}
+  });
+
+  mkChart('c_bundle', {
+    type: 'bar',
+    data: { labels: qs, datasets: [
+      { label: 'Avg deal size ($K)', data: [248, 271, 305, 340, 382, 429], backgroundColor: 'rgba(245,166,35,0.3)', borderColor: '#f5a623', borderWidth: 1, yAxisID: 'y' },
+      { label: 'Bundle rate %', data: [32, 36, 38, 40, 44, 47], type: 'line', borderColor: '#9b7ff4', backgroundColor: 'transparent', borderWidth: 2, pointRadius: 3, pointBackgroundColor: '#9b7ff4', tension: 0.4, yAxisID: 'y2' }
+    ]},
+    options: { ...gOpts(), scales: {
+      x: { grid: { display: false }, ticks: { color: '#7a8299', font: { size: 10 } } },
+      y: { ticks: { callback: v => '$' + v + 'K', color: '#7a8299', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.04)' } },
+      y2: { position: 'right', min: 0, max: 70, ticks: { callback: v => v + '%', color: '#9b7ff4', font: { size: 10 } }, grid: { display: false } }
+    }}
+  });
+
+  // ── VIEW 4 ──
+  mkChart('c_esg_combo', {
+    type: 'bar',
+    data: { labels: qs, datasets: [
+      { label: 'Circularity %', data: [33, 35, 37, 38, 41, 43], backgroundColor: 'rgba(155,127,244,0.3)', borderColor: '#9b7ff4', borderWidth: 1, yAxisID: 'y' },
+      { label: 'Target', data: [40, 40, 40, 40, 40, 40], type: 'line', borderColor: '#ff6b5b', backgroundColor: 'transparent', borderWidth: 1.5, pointRadius: 0, borderDash: [5, 3], yAxisID: 'y' },
+      { label: 'Recovery $K', data: [349, 407, 491, 561, 641, 733], type: 'line', borderColor: '#4a9eff', backgroundColor: 'transparent', borderWidth: 2, pointRadius: 3, pointBackgroundColor: '#4a9eff', tension: 0.4, yAxisID: 'y2' }
+    ]},
+    options: { ...gOpts(), scales: {
+      x: { grid: { display: false }, ticks: { color: '#7a8299', font: { size: 10 } } },
+      y: { min: 20, max: 55, ticks: { callback: v => v + '%', color: '#9b7ff4', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.04)' } },
+      y2: { position: 'right', ticks: { callback: v => '$' + v + 'K', color: '#4a9eff', font: { size: 10 } }, grid: { display: false } }
+    }}
+  });
+
+  mkChart('c_esg_usage', {
+    type: 'bar',
+    data: {
+      labels: ['Global Trust Bank', 'CloudCore Tech', 'NexGen Cloud', 'Apex Financial', 'HealthFirst', 'Vertex Media', 'BioSync', 'Precision OEM', 'Meridian Telecom'],
+      datasets: [{ data: [6, 6, 5, 5, 4, 4, 2, 3, 3], backgroundColor: d => d.raw >= 5 ? '#9b7ff4' : d.raw >= 4 ? '#7F77DD' : '#534AB7' }]
+    },
+    options: { ...gOpts(), indexAxis: 'y', scales: {
+      x: { ticks: { color: '#7a8299', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.04)' } },
+      y: { grid: { display: false }, ticks: { color: '#7a8299', font: { size: 10 } } }
+    }}
+  });
+
+  mkChart('c_recovery_wf', {
+    type: 'bar',
+    data: {
+      labels: ['Global Trust', 'CloudCore', 'NexGen', 'Apex Fin.', 'HealthFirst', 'Vertex Media', 'BioSync', 'Precision', 'Meridian'],
+      datasets: [{ data: [28200, 28000, 25900, 10000, 4080, 6060, 1920, 3060, -24000], backgroundColor: d => d.raw >= 0 ? 'rgba(31,201,154,0.6)' : 'rgba(255,95,95,0.6)', borderColor: d => d.raw >= 0 ? '#1fc99a' : '#ff5f5f', borderWidth: 1 }]
+    },
+    options: { ...gOpts(), scales: {
+      x: { grid: { display: false }, ticks: { color: '#7a8299', font: { size: 9 } } },
+      y: { ticks: { callback: v => '$' + (v/1000).toFixed(0) + 'K', color: '#7a8299', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.04)' } }
+    }}
+  });
+
+  mkChart('c_assets_area', {
+    type: 'line',
+    data: { labels: qs, datasets: [
+      { label: 'Reused', data: [3910, 4632, 5385, 6057, 6905, 7836], backgroundColor: 'rgba(31,201,154,0.25)', borderColor: '#1fc99a', fill: true, borderWidth: 2, tension: 0.4 },
+      { label: 'Recycled', data: [9611, 11403, 13215, 14856, 16874, 19087], backgroundColor: 'rgba(74,158,255,0.15)', borderColor: '#4a9eff', fill: '-1', borderWidth: 2, tension: 0.4 },
+      { label: 'Disposed', data: [382, 418, 454, 489, 528, 582], backgroundColor: 'rgba(255,95,95,0.15)', borderColor: '#ff5f5f', fill: '-1', borderWidth: 1.5, tension: 0.4, borderDash: [3, 3] }
+    ]},
+    options: { ...gOpts(), scales: {
+      x: { grid: { display: false }, ticks: { color: '#7a8299', font: { size: 10 } } },
+      y: { ticks: { color: '#7a8299', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.04)' } }
+    }}
+  });
+
+  // ── VIEW 5 ──
+  mkChart('c_nrr_wf', {
+    type: 'bar',
+    data: {
+      labels: ['New logo ACV', 'Expansion rev', 'Contraction', 'Churn', 'Net NRR'],
+      datasets: [{ data: [6.39, 4.9, -0.1, -0.24, 16.09], backgroundColor: ['rgba(74,158,255,0.5)', 'rgba(31,201,154,0.5)', 'rgba(255,95,95,0.4)', 'rgba(255,95,95,0.6)', 'rgba(74,158,255,0.7)'], borderColor: ['#4a9eff', '#1fc99a', '#ff5f5f', '#ff5f5f', '#4a9eff'], borderWidth: 1 }]
+    },
+    options: { ...gOpts(), scales: {
+      x: { grid: { display: false }, ticks: { color: '#7a8299', font: { size: 11 } } },
+      y: { ticks: { callback: v => '$' + Math.abs(v) + 'M', color: '#7a8299', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.04)' } }
+    }}
+  });
+
+  mkChart('c_acv_pipe', {
+    type: 'line',
+    data: { labels: qs, datasets: [
+      { label: 'Total ACV', data: [6.1, 7.33, 9.31, 10.6, 13.62, 16.09], borderColor: '#4a9eff', backgroundColor: 'rgba(74,158,255,0.06)', fill: true, borderWidth: 2, pointRadius: 4, tension: 0.4 },
+      { label: 'Pipeline value', data: [18.5, 21.2, 24.8, 28.1, 33.5, 39.2], borderColor: '#f5a623', backgroundColor: 'transparent', borderWidth: 2, pointRadius: 4, borderDash: [5, 3], tension: 0.4 }
+    ]},
+    options: { ...gOpts(), scales: {
+      x: { grid: { display: false }, ticks: { color: '#7a8299', font: { size: 10 } } },
+      y: { ticks: { callback: v => '$' + v + 'M', color: '#7a8299', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.04)' } }
+    }}
+  });
+
+  // Sparklines
+  const sparkData = [
+    { label: 'Total ACV ($M)', data: [6.1, 7.33, 9.31, 10.6, 13.62, 16.09], color: '#4a9eff', val: '$16.1M', trend: '+18%' },
+    { label: 'NRR %', data: [108, 110, 112, 109, 114, 117], color: '#1fc99a', val: '117%', trend: '+3pp' },
+    { label: 'SmartERP attach %', data: [24, 27, 31, 36, 41, 47], color: '#f5a623', val: '47%', trend: '+6pp' },
+    { label: 'Avg NPS', data: [64, 67, 68, 67, 69, 71], color: '#9b7ff4', val: '+71', trend: '+2' },
+    { label: 'Circularity rate %', data: [33, 35, 37, 38, 41, 43], color: '#ff6b5b', val: '43%', trend: '+2pp' },
+    { label: 'Win rate %', data: [76, 81, 85, 84, 89, 91], color: '#5dca8a', val: '91%', trend: '+2pp' },
+  ];
+
+  const sw = document.getElementById('spark-wrap');
+  sw.innerHTML = sparkData.map((s, i) => `
+    <div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.04)">
+      <span style="font-size:11px;color:var(--muted);width:130px;flex-shrink:0">${s.label}</span>
+      <div style="position:relative;width:100px;height:28px;flex-shrink:0"><canvas id="spark_${i}" role="img" aria-label="${s.label} sparkline">${s.label} trend.</canvas></div>
+      <span style="font-family:'DM Mono',monospace;font-size:13px;font-weight:500;color:${s.color};min-width:50px">${s.val}</span>
+      <span style="font-size:10px;color:var(--green)">${s.trend} QoQ</span>
+    </div>
+  `).join('');
+
+  sparkData.forEach((s, i) => {
+    mkChart('spark_' + i, {
+      type: 'line',
+      data: { labels: qs, datasets: [{ data: s.data, borderColor: s.color, backgroundColor: 'transparent', borderWidth: 1.5, pointRadius: 0, tension: 0.4 }] },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { enabled: false } }, scales: { x: { display: false }, y: { display: false } }, animation: false }
+    });
+  });
+}
+
+const titles = ['Revenue & Pipeline', 'Customer Health', 'Deal Quality & Efficiency', 'ESG & Value Recovery', 'Executive Scorecard'];
+
+function switchView(idx, el) {
+  document.querySelectorAll('.dashboard-view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-' + idx).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('topbar-title').textContent = titles[idx];
+}
+
+function updateCharts() { buildAll(); }
+
+window.addEventListener('load', buildAll);
+</script>
+</body>
+</html>
