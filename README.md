@@ -6,6 +6,9 @@ Built a multi-task analytics pipeline using **Python** and **XGBoost** to simult
 - **Retention Engine:** Flagged churn-vulnerable accounts with a macro F1-score of ***X%***.
 - **Capital Forecasting:** Reduced reserves forecasting error to an RMSE of just **±$*X***.
 
+<br>
+<br>
+
 ### 📊 Model Interpretability & Business Drivers
 
 To ensure transparency for non-technical stakeholders (e.g., risk officers and medical directors), I extracted feature importance metrics using the XGBoost F-Score (weight-based split frequency).
